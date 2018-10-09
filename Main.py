@@ -293,4 +293,10 @@ async def deltime(self):
             conn.close()
             await self.bot.say("```Score successfully deleted.```")
 
+@bot.command(pass_context=True)
+@commands.has_role("crosswords")
+@asyncio.coroutine
+async def link(self):
+    await self.bot.say("```https://www.nytimes.com/crosswords/game/mini```")
+
 bot.run(os.environ.get("DISCORD_TOKEN"))
