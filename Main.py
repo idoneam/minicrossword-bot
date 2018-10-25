@@ -296,6 +296,6 @@ async def deltime(self):
 @bot.command(pass_context=True)
 @asyncio.coroutine
 async def link(self):
-    await self.bot.say("```https://www.nytimes.com/crosswords/game/mini```")
+    await self.bot.say("https://www.nytimes.com/crosswords/game/mini")
 
 bot.run(os.environ.get("DISCORD_TOKEN"))
