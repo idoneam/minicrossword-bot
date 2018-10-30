@@ -28,6 +28,16 @@ def on_ready():
     print('Logged in as {0} ({1})'.format(bot.user.name, bot.user.id))
 
 @bot.command(pass_context=True)
+@commands.has_role("idoneam")
+async def update(self):
+    """
+    Update the bot by pulling changes from the git repository
+    """
+    shell_output = subprocess.check_output("git pull", shell=True)
+    status_message = shell_output.decode("unicode_escape")
+    await self.bot.say("`%s`" % status_message)
+
+@bot.command(pass_context=True)
 @commands.has_role("crosswords")
 @asyncio.coroutine
 async def addtime(self, time: str):
