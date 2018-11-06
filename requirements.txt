@@ -2,7 +2,19 @@
 # https://github.com/damnever/pigar
 
 # Main.py: 3,4
-discord.py == 0.16.3
+discord.py == 0.16.12
+
+# get-pip.py: 82,83,84
+pip == 18.1
+
+# Main.py: 12
+pytz == 2018.3
+
+# get-pip.py: 119
+setuptools == 39.0.1
 
 # Main.py: 7
-tabulate == 0.7.7
+tabulate == 0.8.2
+
+# get-pip.py: 125
+wheel == 0.30.0

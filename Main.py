@@ -9,6 +9,7 @@ import logging
 import os, sys
 import datetime
 import math
+import pytz
 
 # List the extensions (modules) that should be loaded on startup.
 DB_PATH = './Scoreboard.db'
@@ -67,7 +68,7 @@ async def addtime(self, time: str):
     time = int(time)
 
     # on weekdays, puzzle flips over at 10PMEST, on weekends 6PMEST
-    datestamp = datetime.datetime.now()
+    datestamp = datetime.datetime.now(pytz.timezone('EST'))
     day = datestamp.strftime("%a")
     if day == "Sat" or day == "Sun":
         if datestamp.hour >= 18:
