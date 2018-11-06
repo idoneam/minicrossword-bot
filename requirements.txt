@@ -2,7 +2,10 @@
 # https://github.com/damnever/pigar
 
 # Main.py: 3,4
-discord.py == 0.16.3
+discord.py == 0.16.12
+
+# Main.py: 12
+pytz == 2018.3
 
 # Main.py: 7
-tabulate == 0.7.7
+tabulate == 0.8.2
