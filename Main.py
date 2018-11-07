@@ -30,6 +30,7 @@ def on_ready():
 
 @bot.command(pass_context=True)
 @commands.has_role("idoneam")
+@asyncio.coroutine
 async def update(self):
     """
     Update the bot by pulling changes from the git repository
@@ -37,6 +38,17 @@ async def update(self):
     shell_output = subprocess.check_output("git pull", shell=True)
     status_message = shell_output.decode("unicode_escape")
     await self.bot.say("`%s`" % status_message)
+    
+@bot.command(pass_context=True)
+@commands.has_role("Discord Moderator")
+@asyncio.coroutine
+async def backup(self):
+    '''
+    Send the current database file to the channel
+    '''
+    current_time = datetime.now(tz=pytz.timezone('America/New_York')).strftime('%Y%m%d-%H:%M')
+    backup_filename = 'MiniScores_%s.db' % current_time
+    await self.bot.say(content='Backup', file=discord.File(fp=DB_PATH, filename=backup_filename))
 
 @bot.command(pass_context=True)
 @commands.has_role("crosswords")
@@ -68,7 +80,7 @@ async def addtime(self, time: str):
     time = int(time)
 
     # on weekdays, puzzle flips over at 10PMEST, on weekends 6PMEST
-    datestamp = datetime.datetime.now(pytz.timezone('EST'))
+    datestamp = datetime.datetime.now(tz=pytz.timezone('America/New_York'))
     day = datestamp.strftime("%a")
     if day == "Sat" or day == "Sun":
         if datestamp.hour >= 18:
