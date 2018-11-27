@@ -11,7 +11,6 @@ import datetime
 import math
 import pytz
 
-# List the extensions (modules) that should be loaded on startup.
 DB_PATH = './Scoreboard.db'
 
 bot = commands.Bot(command_prefix='%')
@@ -161,6 +160,7 @@ async def ltimes(self):
             msg += '(%s) %d\n' % (timeslist[i][1], int(timeslist[i][0]))
     msg += '```'
     await self.bot.say(msg)
+    conn.close()
 
 @bot.command(pass_context=True)
 @commands.has_role("crosswords")
@@ -196,6 +196,7 @@ async def useravg(self):
             msg += "~ %s's Saturday Crossword Avg: %d ~" % (member.name,int(sat_avg))
     msg += "```"
     await self.bot.say(msg)
+    conn.close()
 
 @bot.command(pass_context=True)
 @commands.has_role("crosswords")
@@ -230,6 +231,7 @@ async def rank(self):
             msg += "[%s] %s: %d\n" % (i+1,rankings[i][0],int(rankings[i][1]))
     msg += "```"
     await self.bot.say(msg)
+    conn.close()
 
 @bot.command(pass_context=True)
 @commands.has_role("crosswords")
@@ -264,6 +266,7 @@ async def saturdayrank(self):
             msg += "[%s] %s: %d\n" % (i+1,rankings[i][0],int(rankings[i][1]))
     msg += "```"
     await self.bot.say(msg)
+    conn.close()
 
 @bot.command(pass_context=True)
 @commands.has_role("crosswords")
