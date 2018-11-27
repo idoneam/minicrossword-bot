@@ -10,6 +10,7 @@ import os, sys
 import datetime
 import math
 import pytz
+import subprocess
 
 DB_PATH = './Scoreboard.db'
 
@@ -45,7 +46,7 @@ async def backup(self):
     '''
     Send the current database file to the channel
     '''
-    current_time = datetime.now(tz=pytz.timezone('America/New_York')).strftime('%Y%m%d-%H:%M')
+    current_time = datetime.datetime.now(tz=pytz.timezone('America/New_York')).strftime('%Y%m%d-%H:%M')
     backup_filename = 'MiniScores_%s.db' % current_time
     await self.bot.say(content='Backup', file=discord.File(fp=DB_PATH, filename=backup_filename))
 
