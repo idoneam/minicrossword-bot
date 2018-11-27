@@ -29,7 +29,7 @@ def on_ready():
     print('Logged in as {0} ({1})'.format(bot.user.name, bot.user.id))
 
 @bot.command(pass_context=True)
-@commands.has_role("idoneam")
+@commands.has_role("Discord Moderator")
 @asyncio.coroutine
 async def update(self):
     """
@@ -49,6 +49,17 @@ async def backup(self):
     current_time = datetime.datetime.now(tz=pytz.timezone('America/New_York')).strftime('%Y%m%d-%H:%M')
     backup_filename = 'MiniScores_%s.db' % current_time
     await self.bot.say(content='Backup', file=discord.File(fp=DB_PATH, filename=backup_filename))
+    
+@bot.command(pass_context=True)
+@commands.has_role("Discord Moderator")
+@asyncio.coroutine
+async def restart(self):
+    '''
+    Restart the bot
+    '''
+    await self.bot.say("`Beep boop boop beep beep beep beep`")
+    python = sys.executable
+    os.execl(python, python, *sys.argv)
 
 @bot.command(pass_context=True)
 @commands.has_role("crosswords")
