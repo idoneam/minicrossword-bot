@@ -29,7 +29,7 @@ def on_ready():
     print('Logged in as {0} ({1})'.format(bot.user.name, bot.user.id))
 
 @bot.command(pass_context=True)
-@commands.has_role("Discord Moderator")
+@commands.has_role("idoneam")
 @asyncio.coroutine
 async def update(self):
     """
@@ -40,7 +40,7 @@ async def update(self):
     await self.bot.say("`%s`" % status_message)
     
 @bot.command(pass_context=True)
-@commands.has_role("Discord Moderator")
+@commands.has_role("idoneam")
 @asyncio.coroutine
 async def backup(self):
     '''
@@ -51,7 +51,7 @@ async def backup(self):
     await self.bot.say(content='Backup', file=discord.File(fp=DB_PATH, filename=backup_filename))
     
 @bot.command(pass_context=True)
-@commands.has_role("Discord Moderator")
+@commands.has_role("idoneam")
 @asyncio.coroutine
 async def restart(self):
     '''
