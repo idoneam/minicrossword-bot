@@ -100,18 +100,22 @@ async def addtime(self, time: str):
         if datestamp.hour >= 22:
             datestamp = datestamp + datetime.timedelta(days=1)
 
+    day = datestamp.strftime("%a")
     date_str = datestamp.strftime('%Y-%m-%d')
     t = (member.id, member.name, date_str, time)
     c.execute("INSERT OR REPLACE INTO Scores VALUES (?,?,?,?)",t)
     conn.commit()
     msg = "```"
     msg += "Score added.\n\n"
+
     # calculate new avg
     timeslist = c.execute('SELECT Score,Date FROM Scores WHERE ID=?',(member.id,)).fetchall()
     reg_avg = 0
     otherdays = 0
     sat_avg = 0
     saturdays = 0
+    avg_diff = None
+    avgslist = c.execute('SELECT RegAvg,SatAvg FROM Ranking WHERE ID=?',(member.id,)).fetchall()
     for i in range(len(timeslist)):
         day = datetime.datetime.strptime(timeslist[i][1],"%Y-%m-%d").strftime("%a")
         if day == "Sat":
@@ -121,24 +125,47 @@ async def addtime(self, time: str):
             reg_avg += int(timeslist[i][0])
             otherdays += 1
     if otherdays != 0:
-        reg_avg = reg_avg/otherdays
-        if reg_avg > 59:
-            minutes = math.floor(reg_avg/60)
-            seconds = int(reg_avg % 60)
-            msg += "~ %s's Regular Crossword Avg: %d:%s ~\n" % (member.name,minutes,str(seconds).zfill(2))
+        new_reg_avg = int(reg_avg/otherdays)
+        old_reg_avg = avgslist[0][0]
+        if old_reg_avg != None: 
+            if day != "Sat":
+                avg_diff = str(new_reg_avg - old_reg_avg)
+                if avg_diff[0] != "-": avg_diff = "+" + avg_diff 
+        if new_reg_avg > 59:
+            minutes = math.floor(new_reg_avg/60)
+            seconds = int(new_reg_avg % 60)
+            if avg_diff:
+                msg += "~ %s's Regular Crossword Avg: %d:%s [%s]~\n" % (member.name,minutes,str(seconds).zfill(2),avg_diff)
+            else:
+                msg += "~ %s's Regular Crossword Avg: %d:%s ~\n" % (member.name,minutes,str(seconds).zfill(2))
         else:
-            msg += "~ %s's Regular Crossword Avg: %d ~\n" % (member.name,int(reg_avg))
-        c.execute("INSERT OR REPLACE INTO Ranking VALUES({0},'{1}',{2},(SELECT SatAvg FROM Ranking WHERE ID={0}))".format(member.id,member.name,reg_avg))
+            if avg_diff:
+                msg += "~ %s's Regular Crossword Avg: %d [%s]~\n" % (member.name,int(new_reg_avg),avg_diff)
+            else:
+                msg += "~ %s's Regular Crossword Avg: %d ~\n" % (member.name,int(new_reg_avg))
+        c.execute("INSERT OR REPLACE INTO Ranking VALUES({0},'{1}',{2},(SELECT SatAvg FROM Ranking WHERE ID={0}))".format(member.id,member.name,new_reg_avg))
         conn.commit()
+        avg_diff = None
     if saturdays != 0:
-        sat_avg = sat_avg/saturdays
-        if sat_avg > 59:
-            minutes = math.floor(sat_avg/60)
-            seconds = int(sat_avg % 60)
-            msg += "~ %s's Saturday Crossword Avg: %d:%s ~" % (member.name,minutes,str(seconds).zfill(2))
+        new_sat_avg = int(sat_avg/saturdays)
+        old_sat_avg = avgslist[0][1]
+        if old_sat_avg != None:
+            if day == "Sat":
+                avg_diff = str(new_sat_avg - old_sat_avg)
+                if avg_diff[0] != "-": avg_diff = "+" + avg_diff
+        if new_sat_avg > 59:
+            minutes = math.floor(new_sat_avg/60)
+            seconds = int(new_sat_avg % 60)
+            if avg_diff:
+                msg += "~ %s's Saturday Crossword Avg: %d:%s [%s]~" % (member.name,minutes,str(seconds).zfill(2),avg_diff)
+            else:
+                msg += "~ %s's Saturday Crossword Avg: %d:%s ~" % (member.name,minutes,str(seconds).zfill(2))
         else:
-            msg += "~ %s's Saturday Crossword Avg: %d ~" % (member.name,int(sat_avg))
-        c.execute("INSERT OR REPLACE INTO Ranking VALUES({0},'{1}',(SELECT RegAvg FROM Ranking WHERE ID={0}),{2})".format(member.id,member.name,sat_avg))
+            if avg_diff:
+                msg += "~ %s's Saturday Crossword Avg: %d [%s]~" % (member.name,int(new_sat_avg),avg_diff)
+            else:
+                msg += "~ %s's Saturday Crossword Avg: %d ~" % (member.name,int(new_sat_avg))
+        c.execute("INSERT OR REPLACE INTO Ranking VALUES({0},'{1}',(SELECT RegAvg FROM Ranking WHERE ID={0}),{2})".format(member.id,member.name,new_sat_avg))
         conn.commit()
 
     msg += "```"
