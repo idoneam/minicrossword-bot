@@ -48,7 +48,7 @@ async def backup(self):
     '''
     current_time = datetime.datetime.now(tz=pytz.timezone('America/New_York')).strftime('%Y%m%d-%H:%M')
     backup_filename = 'MiniScores_%s.db' % current_time
-    await self.bot.say(content='Backup', file=discord.File(fp=DB_PATH, filename=backup_filename))
+    await self.bot.send_file(self.message.channel, DB_PATH, filename=backup_filename, content='Backup')
     
 @bot.command(pass_context=True)
 @commands.has_role("idoneam")
