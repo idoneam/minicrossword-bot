@@ -335,7 +335,7 @@ async def saturdayrank(self):
                 most_recent_day = t[1]
 
         delta = datetime.datetime.now() - datetime.datetime.strptime(most_recent_day, '%Y-%m-%d')
-        if delta.days > 10:
+        if delta.days > 30:
             continue
 
         if int(rankings[i][1]) > 59:
