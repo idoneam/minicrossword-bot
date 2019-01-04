@@ -261,13 +261,34 @@ async def rank(self):
             avgs.append((times[i][0],times[i][1]))
     rankings = sorted(avgs, key=lambda x:x[1])
     msg = "```Minicrossword Scoreboard:\n"
-    for i in range(min(len(rankings),10)):
+    scoreboard_len = 0
+    for i in range(len(rankings)):
+        if rankings[i][1] == 999999:
+            continue
+
+        if scoreboard_len == 10:
+            break
+
+        unsorted_usr_timeslist = c.execute('SELECT Score,Date FROM Scores WHERE Name=?', (rankings[i][0],)).fetchall()
+        usr_timeslist = sorted(unsorted_usr_timeslist, key=lambda x:x[1])
+        score_count = 0
+        most_recent_day = ''
+        for t in usr_timeslist:
+            if datetime.datetime.strptime(t[1], '%Y-%m-%d').strftime('%a') != "Sat":
+                score_count += 1
+                most_recent_day = t[1]
+
+        delta = datetime.datetime.now() - datetime.datetime.strptime(most_recent_day, '%Y-%m-%d')
+        if delta.days > 10:
+            continue
+
         if int(rankings[i][1]) > 59:
             minutes = math.floor(int(rankings[i][1])/60)
             seconds = int(rankings[i][1]) % 60
-            msg += "[%s] %s: %d:%s\n" % (i+1,rankings[i][0],minutes,str(seconds).zfill(2))
+            msg += "[%s] %s: %d:%s (of %d)\n" % (scoreboard_len+1,rankings[i][0],minutes,str(seconds).zfill(2),score_count)
         else:
-            msg += "[%s] %s: %d\n" % (i+1,rankings[i][0],int(rankings[i][1]))
+            msg += "[%s] %s: %d (of %d)\n" % (scoreboard_len+1,rankings[i][0],int(rankings[i][1]),score_count)
+        scoreboard_len += 1
     msg += "```"
     await self.bot.say(msg)
     conn.close()
@@ -296,13 +317,34 @@ async def saturdayrank(self):
             avgs.append((times[i][0],times[i][1]))
     rankings = sorted(avgs, key=lambda x:x[1])
     msg = "```Saturday Minicrossword Scoreboard:\n"
-    for i in range(min(len(rankings),10)):
+    scoreboard_len = 0
+    for i in range(len(rankings)):
+        if rankings[i][1] == 999999:
+            continue
+
+        if scoreboard_len == 10:
+            break
+
+        unsorted_usr_timeslist = c.execute('SELECT Score,Date FROM Scores WHERE Name=?', (rankings[i][0],)).fetchall()
+        usr_timeslist = sorted(unsorted_usr_timeslist, key=lambda x:x[1])
+        score_count = 0
+        most_recent_day = ''
+        for t in usr_timeslist:
+            if datetime.datetime.strptime(t[1], '%Y-%m-%d').strftime('%a') == "Sat":
+                score_count += 1
+                most_recent_day = t[1]
+
+        delta = datetime.datetime.now() - datetime.datetime.strptime(most_recent_day, '%Y-%m-%d')
+        if delta.days > 10:
+            continue
+
         if int(rankings[i][1]) > 59:
             minutes = math.floor(int(rankings[i][1])/60)
             seconds = int(rankings[i][1]) % 60
-            msg += "[%s] %s: %d:%s\n" % (i+1,rankings[i][0],minutes,str(seconds).zfill(2))
+            msg += "[%s] %s: %d:%s (of %d)\n" % (scoreboard_len+1,rankings[i][0],minutes,str(seconds).zfill(2),score_count)
         else:
-            msg += "[%s] %s: %d\n" % (i+1,rankings[i][0],int(rankings[i][1]))
+            msg += "[%s] %s: %d (of %d)\n" % (scoreboard_len+1,rankings[i][0],int(rankings[i][1]),score_count)
+        scoreboard_len += 1
     msg += "```"
     await self.bot.say(msg)
     conn.close()
