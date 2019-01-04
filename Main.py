@@ -105,8 +105,11 @@ async def addtime(self, time: str):
     t = (member.id, member.name, date_str, time)
     c.execute("INSERT OR REPLACE INTO Scores VALUES (?,?,?,?)",t)
     conn.commit()
-    msg = "```"
+    msg = "```css\n"
     msg += "Score added.\n\n"
+    msg += "```"
+    await self.bot.say(msg)
+    msg = "```"
 
     # calculate new avg
     timeslist = c.execute('SELECT Score,Date FROM Scores WHERE ID=?',(member.id,)).fetchall()
@@ -218,7 +221,7 @@ async def useravg(self):
         return
     reg_avg = avgslist[0][0]
     sat_avg = avgslist[0][1]
-    msg = "```"
+    msg = "```apache\n"
     if reg_avg != None:
         if reg_avg > 59:
             minutes = math.floor(reg_avg/60)
@@ -260,7 +263,12 @@ async def rank(self):
         else:
             avgs.append((times[i][0],times[i][1]))
     rankings = sorted(avgs, key=lambda x:x[1])
-    msg = "```Minicrossword Scoreboard:\n"
+    msg = "```css\n"
+    msg += "Minicrossword Scoreboard:\n"
+    msg += "```"
+    await self.bot.say(msg)
+    msg = "```"
+
     scoreboard_len = 0
     for i in range(len(rankings)):
         if rankings[i][1] == 999999:
@@ -316,7 +324,12 @@ async def saturdayrank(self):
         else:
             avgs.append((times[i][0],times[i][1]))
     rankings = sorted(avgs, key=lambda x:x[1])
-    msg = "```Saturday Minicrossword Scoreboard:\n"
+    msg = "```css\n"
+    msg += "Saturday Minicrossword Scoreboard:\n"
+    msg += "```"
+    await self.bot.say(msg)
+    msg = "```"
+
     scoreboard_len = 0
     for i in range(len(rankings)):
         if rankings[i][1] == 999999:
