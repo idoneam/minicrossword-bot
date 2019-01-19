@@ -129,7 +129,10 @@ async def addtime(self, time: str):
             otherdays += 1
     if otherdays != 0:
         new_reg_avg = int(reg_avg/otherdays)
-        old_reg_avg = avgslist[0][0]
+        try:
+            old_reg_avg = avgslist[0][0]
+        except:
+            old_reg_avg = None
         if old_reg_avg != None: 
             if day != "Sat":
                 avg_diff = str(new_reg_avg - old_reg_avg)
@@ -151,7 +154,10 @@ async def addtime(self, time: str):
         avg_diff = None
     if saturdays != 0:
         new_sat_avg = int(sat_avg/saturdays)
-        old_sat_avg = avgslist[0][1]
+        try:
+            old_sat_avg = avgslist[0][1] 
+        except:
+            old_sat_avg = None
         if old_sat_avg != None:
             if day == "Sat":
                 avg_diff = str(new_sat_avg - old_sat_avg)
