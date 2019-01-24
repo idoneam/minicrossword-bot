@@ -14,7 +14,7 @@ import subprocess
 
 DB_PATH = './Scoreboard.db'
 
-bot = commands.Bot(command_prefix='%')
+bot = commands.Bot(command_prefix='%', case_insensitive=True)
 
 # Logging configuration
 logger = logging.getLogger('discord')
