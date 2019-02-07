@@ -14,7 +14,8 @@ import subprocess
 
 DB_PATH = './Scoreboard.db'
 
-bot = commands.Bot(command_prefix='%')
+cmd_prefix = '%'
+bot = commands.Bot(command_prefix=cmd_prefix)
 
 # Logging configuration
 logger = logging.getLogger('discord')
@@ -64,10 +65,14 @@ async def restart(self):
 @bot.command(pass_context=True)
 @commands.has_role("crosswords")
 @asyncio.coroutine
-async def addtime(self, time: str):
+async def addtime(self, time: str = None):
     """
     Add a time to the scoreboard (use seconds in int or xx:xx format)
     """
+    if not time:
+        await self.bot.say("`Use {}help to check the correct addtime usage`".format(cmd_prefix))
+        return
+
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     member = self.message.author
