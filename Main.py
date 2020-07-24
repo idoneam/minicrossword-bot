@@ -12,6 +12,10 @@ import sqlite3
 import statistics
 import subprocess
 import sys
+import traceback
+
+from typing import Optional, Tuple
+
 
 CMD_PREFIX = "%"
 CROSSWORD_ROLE = "crosswords"
@@ -19,14 +23,25 @@ CROSSWORD_TIMEZONE = "America/New_York"
 DB_PATH = "./Scoreboard.db"
 DEVELOPER_ROLE = "idoneam"
 
-bot = commands.Bot(command_prefix=CMD_PREFIX)
 
 # Logging configuration
 logger = logging.getLogger('discord')
-logger.setLevel(logging.ERROR)
+logger.setLevel(logging.INFO)
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
+
+
+class MiniCrosswordBot(commands.Bot):
+    async def on_command_error(self, context, exception):
+        tb = ""
+        for line in traceback.TracebackException(type(exception), exception, exception.__traceback__).format(chain=None):
+            tb += "  " + line  # Indent for logging
+
+        logger.error("Encountered traceback:\n" + tb)
+
+
+bot = MiniCrosswordBot(command_prefix=CMD_PREFIX)
 
 
 def _format_time(time) -> str:
@@ -58,7 +73,7 @@ def _get_day_from_ymd(time_str) -> str:
 
 @bot.event
 async def on_ready():
-    print(f'Logged in as {bot.user.name} ({bot.user.id})')
+    logger.info(f'Logged in as {bot.user.name} ({bot.user.id})')
 
 
 @bot.command()
@@ -94,6 +109,50 @@ async def restart(ctx):
     os.execl(python, python, *sys.argv)
 
 
+def _update_avg(conn: sqlite3.Connection, member) -> Tuple[Tuple[Optional[int], Optional[int]],
+                                                           Tuple[Optional[int], Optional[int]]]:
+    c = conn.cursor()
+
+    times_list = c.execute('SELECT Score, Date FROM Scores WHERE ID = ?', (member.id,)).fetchall()
+    reg_vals = []
+    sat_vals = []
+    for score, score_date in times_list:
+        (sat_vals if _get_day_from_ymd(score_date) == "Sat" else reg_vals).append(int(score))
+
+    user_avgs = c.execute('SELECT RegAvg, SatAvg FROM Ranking WHERE ID = ?', (member.id,)).fetchone()
+    if not user_avgs:
+        user_avgs = (None, None)
+
+    old_reg_avg: Optional[int]
+    old_sat_avg: Optional[int]
+    old_reg_avg, old_sat_avg = user_avgs
+
+    new_reg_avg: Optional[int] = None
+    new_sat_avg: Optional[int] = None
+
+    # A regular average can only be set if regular crossword scores exist
+    if reg_vals:
+        new_reg_avg = int(statistics.mean(reg_vals))
+        c.execute(
+            "INSERT OR REPLACE INTO Ranking VALUES (:id, :name, :reg_avg, "
+            "(SELECT SatAvg FROM Ranking WHERE ID=:id))",
+            {"id": member.id, "name": member.name, "reg_avg": new_reg_avg}
+        )
+        conn.commit()
+
+    # A saturday average can only be set if saturday crossword scores exist
+    if sat_vals:
+        new_sat_avg = int(statistics.mean(sat_vals))
+        c.execute(
+            "INSERT OR REPLACE INTO Ranking VALUES(:id, :name, (SELECT RegAvg FROM Ranking WHERE ID=:id), "
+            ":new_sat_avg)",
+            {"id": member.id, "name": member.name, "sat_avg": new_sat_avg}
+        )
+        conn.commit()
+
+    return (old_reg_avg, new_reg_avg), (old_sat_avg, new_sat_avg)
+
+
 @bot.command()
 @commands.has_role(CROSSWORD_ROLE)
 async def addtime(ctx, time: str = None):
@@ -105,24 +164,24 @@ async def addtime(ctx, time: str = None):
         await ctx.send(f"`Use {CMD_PREFIX}help to check the correct addtime usage`")
         return
 
+    # idiot proofing, convert time to int
+    try:
+        if ":" in time:
+            timestamp = datetime.datetime.strptime(time, '%M:%S')
+            time = timestamp.minute * 60 + timestamp.second
+        else:
+            time = int(time)
+            if not (1 <= time <= 1000):
+                raise ValueError
+    except ValueError:  # Invalid strptime, int cast, or out of "valid" range
+        await ctx.send('`lmao nice try ( ͠° ͟ʖ ͠°)`')
+        return
+
     conn = sqlite3.connect(DB_PATH)
 
     try:
         c = conn.cursor()
         member = ctx.author
-
-        # idiot proofing
-        try:
-            if ":" in time:
-                timestamp = datetime.datetime.strptime(time, '%M:%S')
-                time = timestamp.minute * 60 + timestamp.second
-            if not (1 <= int(time) <= 1000):
-                raise ValueError
-        except ValueError:  # Invalid strptime, int cast, or out of "valid" range
-            await ctx.send('`lmao nice try ( ͠° ͟ʖ ͠°)`')
-            return
-
-        time = int(time)
 
         # on weekdays, puzzle flips over at 10PMEST, on weekends 6PMEST
         datestamp = datetime.datetime.now(tz=pytz.timezone(CROSSWORD_TIMEZONE))
@@ -136,47 +195,24 @@ async def addtime(ctx, time: str = None):
         conn.commit()
         await ctx.send("```css\nScore added.\n```")
 
-        # calculate new avg
-        times_list = c.execute('SELECT Score, Date FROM Scores WHERE ID = ?', (member.id,)).fetchall()
-        reg_vals = []
-        sat_vals = []
-        for score, score_date in times_list:
-            (sat_vals if _get_day_from_ymd(score_date) == "Sat" else reg_vals).append(int(score))
-
-        avgs_list = c.execute('SELECT RegAvg, SatAvg FROM Ranking WHERE ID = ?', (member.id,)).fetchall()
+        # Update averages and attach them to the message
 
         def _format_avg_delta(ad):
             return f"[{ad}]" if ad else ""
 
-        msg = "```"
+        def _avg_text(old_avg: Optional[int], new_avg: Optional[int], saturday: bool = False) -> str:
+            if not new_avg:
+                return ""
 
-        if reg_vals:
-            new_reg_avg = int(statistics.mean(reg_vals))
-            old_reg_avg = avgs_list[0][0] if avgs_list else None
-            avg_diff = f"{str(new_reg_avg - old_reg_avg):+d}" if old_reg_avg is not None and day != "Sat" else None
-            msg += f"~ {member.name}'s Regular Crossword Avg: {_format_time(new_reg_avg)} " \
-                   f"{_format_avg_delta(avg_diff)}~\n"
-            c.execute(
-                "INSERT OR REPLACE INTO Ranking VALUES (:id, :name, :reg_avg, "
-                "(SELECT SatAvg FROM Ranking WHERE ID=:id))",
-                {"id": member.id, "name": member.name, "reg_avg": new_reg_avg}
-            )
-            conn.commit()
+            right_day_for_average = (day != "Sat" and not saturday) or (day == "Sat" and saturday)
 
-        if sat_vals:
-            new_sat_avg = int(statistics.mean(sat_vals))
-            old_sat_avg = avgs_list[0][1] if avgs_list else None
-            avg_diff = f"{str(new_sat_avg - old_sat_avg):+d}" if old_sat_avg is not None and day == "Sat" else None
-            msg += f"~ {member.name}'s Saturday Crossword Avg: {_format_time(new_sat_avg)} " \
-                   f"{_format_avg_delta(avg_diff)}~"
-            c.execute(
-                "INSERT OR REPLACE INTO Ranking VALUES(:id, :name, (SELECT RegAvg FROM Ranking WHERE ID=:id), "
-                ":new_sat_avg)",
-                {"id": member.id, "name": member.name, "sat_avg": new_sat_avg}
-            )
-            conn.commit()
+            avg_diff = f"{new_avg - old_avg:+d}" if old_avg is not None and right_day_for_average else None
 
-        msg += "```"
+            return f"~ {member.name}'s {'Saturday' if saturday else 'Regular'} Crossword Avg: " \
+                   f"{_format_time(new_avg)} {_format_avg_delta(avg_diff)}~"
+
+        (old_reg_avg, new_reg_avg), (old_sat_avg, new_sat_avg) = _update_avg(conn, member)
+        msg = f"```{_avg_text(old_reg_avg, new_reg_avg)}\n{_avg_text(old_sat_avg, new_sat_avg, saturday=True)}```"
         await ctx.send(msg)
 
     finally:
@@ -197,7 +233,7 @@ async def ltimes(ctx):
         times_list = c.execute("SELECT Score,Date FROM Scores WHERE ID=? ORDER BY Date DESC",
                                (ctx.author.id,)).fetchall()
         if not times_list:
-            await ctx.bot.say('```No times found.```')
+            await ctx.send('```No times found.```')
             return
 
         scores_str = "\n".join(f"({score_date}) {_format_time(score)}\n" for score, score_date in times_list[:20])
