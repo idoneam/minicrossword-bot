@@ -35,7 +35,8 @@ logger.addHandler(handler)
 class MiniCrosswordBot(commands.Bot):
     async def on_command_error(self, context, exception):
         tb = ""
-        for line in traceback.TracebackException(type(exception), exception, exception.__traceback__).format(chain=None):
+        for line in traceback.TracebackException(type(exception), exception, exception.__traceback__)\
+                .format(chain=True):
             tb += "  " + line  # Indent for logging
 
         logger.error("Encountered traceback:\n" + tb)
@@ -145,7 +146,7 @@ def _update_avg(conn: sqlite3.Connection, member) -> Tuple[Tuple[Optional[int], 
         new_sat_avg = int(statistics.mean(sat_vals))
         c.execute(
             "INSERT OR REPLACE INTO Ranking VALUES(:id, :name, (SELECT RegAvg FROM Ranking WHERE ID=:id), "
-            ":new_sat_avg)",
+            ":sat_avg)",
             {"id": member.id, "name": member.name, "sat_avg": new_sat_avg}
         )
         conn.commit()
@@ -241,7 +242,7 @@ async def ltimes(ctx):
             await ctx.send('```No times found.```')
             return
 
-        scores_str = "\n".join(f"({score_date}) {_format_time(score)}\n" for score, score_date in times_list[:20])
+        scores_str = "\n".join(f"({score_date}) {_format_time(score)}" for score, score_date in times_list[:20])
         await ctx.send(f"```{ctx.author.name}'s Scoreboard: \n{scores_str}\n```")
 
     finally:
