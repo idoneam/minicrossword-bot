@@ -35,7 +35,8 @@ logger.addHandler(handler)
 class MiniCrosswordBot(commands.Bot):
     async def on_command_error(self, context, exception):
         tb = ""
-        for line in traceback.TracebackException(type(exception), exception, exception.__traceback__).format(chain=None):
+        for line in traceback.TracebackException(type(exception), exception, exception.__traceback__)\
+                .format(chain=True):
             tb += "  " + line  # Indent for logging
 
         logger.error("Encountered traceback:\n" + tb)
