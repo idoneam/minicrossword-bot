@@ -146,7 +146,7 @@ def _update_avg(conn: sqlite3.Connection, member) -> Tuple[Tuple[Optional[int], 
         new_sat_avg = int(statistics.mean(sat_vals))
         c.execute(
             "INSERT OR REPLACE INTO Ranking VALUES(:id, :name, (SELECT RegAvg FROM Ranking WHERE ID=:id), "
-            ":new_sat_avg)",
+            ":sat_avg)",
             {"id": member.id, "name": member.name, "sat_avg": new_sat_avg}
         )
         conn.commit()
