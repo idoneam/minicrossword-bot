@@ -375,9 +375,14 @@ async def deltime(ctx):
             await ctx.send("```Exited score deletion menu.```")
             return
 
+        # Delete selected the score from the database
         c.execute('DELETE FROM Scores WHERE Score=? AND Date=? AND ID=?',
                   (times_list[choice - 1][0], times_list[choice - 1][1], ctx.author.id))
         conn.commit()
+
+        # Update average scores in the database
+        _update_avg(conn, ctx.author)
+        
         await ctx.send("```Score successfully deleted.```")
 
     finally:
