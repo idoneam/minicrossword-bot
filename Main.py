@@ -241,7 +241,7 @@ async def ltimes(ctx):
             await ctx.send('```No times found.```')
             return
 
-        scores_str = "\n".join(f"({score_date}) {_format_time(score)}\n" for score, score_date in times_list[:20])
+        scores_str = "\n".join(f"({score_date}) {_format_time(score)}" for score, score_date in times_list[:20])
         await ctx.send(f"```{ctx.author.name}'s Scoreboard: \n{scores_str}\n```")
 
     finally:
