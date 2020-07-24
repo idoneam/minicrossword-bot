@@ -150,6 +150,11 @@ def _update_avg(conn: sqlite3.Connection, member) -> Tuple[Tuple[Optional[int], 
         )
         conn.commit()
 
+    # If the user has no scores, delete the average record if it exists
+    if not reg_vals and not sat_vals:
+        c.execute("DELETE FROM Ranking WHERE ID=?", (member.id,))
+        conn.commit()
+
     return (old_reg_avg, new_reg_avg), (old_sat_avg, new_sat_avg)
 
 
@@ -382,7 +387,7 @@ async def deltime(ctx):
 
         # Update average scores in the database
         _update_avg(conn, ctx.author)
-        
+
         await ctx.send("```Score successfully deleted.```")
 
     finally:
