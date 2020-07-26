@@ -204,7 +204,7 @@ async def addtime(ctx, time: str = None):
         # Update averages and attach them to the message
 
         def _format_avg_delta(ad):
-            return f"[{ad}]" if ad else ""
+            return f" [{ad}]" if ad else ""
 
         def _avg_text(old_avg: Optional[int], new_avg: Optional[int], saturday: bool = False) -> str:
             if not new_avg:
@@ -215,7 +215,7 @@ async def addtime(ctx, time: str = None):
             avg_diff = f"{new_avg - old_avg:+d}" if old_avg is not None and right_day_for_average else None
 
             return f"~ {member.name}'s {'Saturday' if saturday else 'Regular'} Crossword Avg: " \
-                   f"{_format_time(new_avg)} {_format_avg_delta(avg_diff)} ~"
+                   f"{_format_time(new_avg)}{_format_avg_delta(avg_diff)} ~"
 
         (old_reg_avg, new_reg_avg), (old_sat_avg, new_sat_avg) = _update_avg(conn, member)
         msg = f"```{_avg_text(old_reg_avg, new_reg_avg)}\n{_avg_text(old_sat_avg, new_sat_avg, saturday=True)}```"
