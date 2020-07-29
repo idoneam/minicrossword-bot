@@ -362,7 +362,7 @@ async def _hist(ctx, saturday: bool = False):
         all_scores = _get_times(c)[int(saturday)]
         scores = _get_times(c, ctx.author)[int(saturday)]
 
-        if not (all_scores or scores):
+        if not (all_scores and scores):
             await ctx.send(NO_TIMES_MESSAGE)
             return
 
