@@ -368,7 +368,7 @@ async def _hist(ctx, saturday: bool = False):
         min_bin, max_bin = (30, 180) if saturday else (10, 160)
 
         if not any(True for score in scores if min_bin <= score <= max_bin):
-            await ctx.send("```No scores in showable range.````")
+            await ctx.send("```No scores in showable range.```")
             return
 
         bins = tuple(range(min_bin, max_bin + 5, 5))
