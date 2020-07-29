@@ -15,7 +15,6 @@ import traceback
 
 from discord.ext import commands
 from matplotlib import pyplot as plt
-from matplotlib.ticker import MaxNLocator
 from typing import Optional, Tuple
 
 
