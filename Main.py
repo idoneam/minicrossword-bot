@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
-import discord
-from discord.ext import commands
-
 import datetime
+import discord
 import logging
+import io
 import math
 import os
 import pytz
@@ -14,6 +13,8 @@ import subprocess
 import sys
 import traceback
 
+from discord.ext import commands
+from matplotlib import pyplot as plt
 from typing import Optional, Tuple
 
 
@@ -30,6 +31,9 @@ logger.setLevel(logging.INFO)
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='a')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
+
+
+NO_TIMES_MESSAGE = '```No times found.```'
 
 
 class MiniCrosswordBot(commands.Bot):
@@ -110,15 +114,23 @@ async def restart(ctx):
     os.execl(python, python, *sys.argv)
 
 
-def _update_avg(conn: sqlite3.Connection, member) -> Tuple[Tuple[Optional[int], Optional[int]],
-                                                           Tuple[Optional[int], Optional[int]]]:
-    c = conn.cursor()
-
-    times_list = c.execute('SELECT Score, Date FROM Scores WHERE ID = ?', (member.id,)).fetchall()
+def _get_times(c: sqlite3.Cursor, member=None) -> Tuple[Tuple[int, ...], Tuple[int, ...]]:
+    if member:
+        times_list = c.execute("SELECT Score, Date FROM Scores WHERE ID = ?", (member.id,)).fetchall()
+    else:
+        times_list = c.execute("SELECT Score, Date FROM Scores").fetchall()
     reg_vals = []
     sat_vals = []
     for score, score_date in times_list:
         (sat_vals if _get_day_from_ymd(score_date) == "Sat" else reg_vals).append(int(score))
+    return tuple(reg_vals), tuple(sat_vals)
+
+
+def _update_avg(conn: sqlite3.Connection, member) -> Tuple[Tuple[Optional[int], Optional[int]],
+                                                           Tuple[Optional[int], Optional[int]]]:
+    c = conn.cursor()
+
+    reg_vals, sat_vals = _get_times(c, member)
 
     user_avgs = c.execute('SELECT RegAvg, SatAvg FROM Ranking WHERE ID = ?', (member.id,)).fetchone()
     if not user_avgs:
@@ -239,7 +251,7 @@ async def ltimes(ctx):
         times_list = c.execute("SELECT Score,Date FROM Scores WHERE ID=? ORDER BY Date DESC",
                                (ctx.author.id,)).fetchall()
         if not times_list:
-            await ctx.send('```No times found.```')
+            await ctx.send(NO_TIMES_MESSAGE)
             return
 
         scores_str = "\n".join(f"({score_date}) {_format_time(score)}" for score, score_date in times_list[:20])
@@ -338,6 +350,76 @@ async def saturdayrank(ctx):
     Display the top 10 in the Saturday minicrossword scoreboard
     """
     await _rank(ctx, saturday=True)
+
+
+async def _hist(ctx, saturday: bool = False):
+    conn = sqlite3.connect(DB_PATH)
+
+    try:
+        c = conn.cursor()
+
+        all_scores = _get_times(c)[int(saturday)]
+        scores = _get_times(c, ctx.author)[int(saturday)]
+
+        if not (all_scores and scores):
+            await ctx.send(NO_TIMES_MESSAGE)
+            return
+
+        min_bin, max_bin = (30, 180) if saturday else (10, 160)
+
+        if not any(True for score in scores if min_bin <= score <= max_bin):
+            await ctx.send("```No scores in showable range.```")
+            return
+
+        bins = tuple(range(min_bin, max_bin + 5, 5))
+
+        fig, ax = plt.subplots(nrows=1, ncols=1)
+        ax.set_title(f"{ctx.author.name}'s {'saturday ' if saturday else ''}score histogram",
+                     color="#DCDDDE")
+        ax.set_facecolor("#40444B")
+        ax.hist(all_scores, bins, density=True, color="#942626")
+        ax.hist(scores, bins, density=True, color="#F04747")
+        fig.legend(
+            ("everyone", ctx.author.name),
+            bbox_to_anchor=(0.92, 0.034),
+            loc="lower right",
+            ncol=2,
+            labelcolor="#DCDDDE",
+            fancybox=False,
+            framealpha=0)
+        fig.subplots_adjust(bottom=0.15)
+        ax.axvline(statistics.mean(all_scores), color="#BB3030", linestyle="dashed", linewidth=2)
+        ax.axvline(statistics.mean(scores), color="#F47676", linestyle="dashed", linewidth=2)
+        ax.set_xlabel("time (seconds)", color="#DCDDDE", loc="left")
+        ax.set_ylabel("density", color="#DCDDDE")
+        ax.tick_params(axis="x", colors="#DCDDDE")
+        ax.tick_params(axis="y", colors="#DCDDDE")
+
+        with io.BytesIO() as tf:
+            fig.savefig(tf, dpi=300, facecolor="#2F3136", edgecolor="#2F292B")  # defaults to PNG
+            tf.seek(0)
+            await ctx.send(file=discord.File(tf, filename="hist.png"))
+
+    finally:
+        conn.close()
+
+
+@bot.command()
+@commands.has_role(CROSSWORD_ROLE)
+async def hist(ctx):
+    """
+    Displays a histogram of user scores for the normal crossword
+    """
+    await _hist(ctx, saturday=False)
+
+
+@bot.command()
+@commands.has_role(CROSSWORD_ROLE)
+async def sathist(ctx):
+    """
+    Displays a histogram of user scores for the Saturday crossword
+    """
+    await _hist(ctx, saturday=True)
 
 
 @bot.command()
