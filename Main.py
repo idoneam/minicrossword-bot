@@ -366,7 +366,7 @@ async def _hist(ctx, saturday: bool = False):
             await ctx.send(NO_TIMES_MESSAGE)
             return
 
-        bins = tuple(range(30, 185, 5)) if saturday else tuple(range(10, 165, 5))
+        bins = tuple(range(25, 185, 5)) if saturday else tuple(range(5, 165, 5))
 
         fig, ax = plt.subplots(nrows=1, ncols=1)
         ax.set_title(f"{ctx.author.name}'s {'saturday ' if saturday else ''}score histogram",
@@ -374,6 +374,8 @@ async def _hist(ctx, saturday: bool = False):
         ax.set_facecolor("#40444B")
         ax.hist(all_scores, bins, density=True, color="#942626")
         ax.hist(scores, bins, density=True, color="#F04747")
+        ax.legend(("everyone", ctx.author.name), labelcolor="#DCDDDE",
+                  loc="upper left", fancybox=False, framealpha=0)
         ax.axvline(statistics.mean(all_scores), color="#BB3030", linestyle="dashed", linewidth=2)
         ax.axvline(statistics.mean(scores), color="#F47676", linestyle="dashed", linewidth=2)
         ax.set_xlabel("time (seconds)", color="#DCDDDE")
