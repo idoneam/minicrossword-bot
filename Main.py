@@ -374,6 +374,8 @@ async def _hist(ctx, saturday: bool = False):
         ax.set_facecolor("#40444B")
         ax.hist(all_scores, bins, density=True, color="#942626")
         ax.hist(scores, bins, density=True, color="#F04747")
+        ax.axvline(statistics.mean(all_scores), color="#BB3030", linestyle="dashed", linewidth=2)
+        ax.axvline(statistics.mean(scores), color="#F47676", linestyle="dashed", linewidth=2)
         ax.set_xlabel("time (seconds)", color="#DCDDDE")
         ax.set_ylabel("density", color="#DCDDDE")
         ax.tick_params(axis="x", colors="#DCDDDE")
