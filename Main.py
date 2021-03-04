@@ -13,16 +13,23 @@ import subprocess
 import sys
 import traceback
 
+from functools import wraps
 from discord.ext import commands
 from matplotlib import pyplot as plt
 from typing import Optional, Tuple
 
 
 CMD_PREFIX = "%"
-CROSSWORD_ROLE = "crosswords"
 CROSSWORD_TIMEZONE = "America/New_York"
 DB_PATH = "./Scoreboard.db"
 DEVELOPER_ROLE = "idoneam"
+BAN_ROLE = "crossedwords"
+
+def not_banned(func):
+    @wraps(func)
+    async def wrapper(ctx, *args, **kwargs):
+        return None if BAN_ROLE in [role.name for role in ctx.author.roles] else await func(ctx, *args, **kwargs)
+    return wrapper
 
 
 # Logging configuration
@@ -45,8 +52,10 @@ class MiniCrosswordBot(commands.Bot):
 
         logger.error("Encountered traceback:\n" + tb)
 
-
-bot = MiniCrosswordBot(command_prefix=CMD_PREFIX)
+intents = discord.Intents.default()
+intents.members = True
+intents.presences = True
+bot = MiniCrosswordBot(command_prefix=CMD_PREFIX, intents=intents)
 
 
 def _format_time(time) -> str:
@@ -172,7 +181,7 @@ def _update_avg(conn: sqlite3.Connection, member) -> Tuple[Tuple[Optional[int], 
 
 
 @bot.command()
-@commands.has_role(CROSSWORD_ROLE)
+@not_banned
 async def addtime(ctx, time: str = None):
     """
     Add a time to the scoreboard (use seconds in int or xx:xx format)
@@ -238,7 +247,7 @@ async def addtime(ctx, time: str = None):
 
 
 @bot.command()
-@commands.has_role(CROSSWORD_ROLE)
+@not_banned
 async def ltimes(ctx):
     """
     List your 20 most recent scores
@@ -262,7 +271,7 @@ async def ltimes(ctx):
 
 
 @bot.command()
-@commands.has_role(CROSSWORD_ROLE)
+@not_banned
 async def useravg(ctx):
     """
     List your Saturday crossword avg and your regular avg
@@ -335,7 +344,7 @@ async def _rank(ctx, saturday: bool = False):
 
 
 @bot.command()
-@commands.has_role(CROSSWORD_ROLE)
+@not_banned
 async def rank(ctx):
     """
     Display the top 10 in the scoreboard
@@ -344,7 +353,7 @@ async def rank(ctx):
 
 
 @bot.command()
-@commands.has_role(CROSSWORD_ROLE)
+@not_banned
 async def saturdayrank(ctx):
     """
     Display the top 10 in the Saturday minicrossword scoreboard
@@ -405,7 +414,7 @@ async def _hist(ctx, saturday: bool = False):
 
 
 @bot.command()
-@commands.has_role(CROSSWORD_ROLE)
+@not_banned
 async def hist(ctx):
     """
     Displays a histogram of user scores for the normal crossword
@@ -414,7 +423,7 @@ async def hist(ctx):
 
 
 @bot.command()
-@commands.has_role(CROSSWORD_ROLE)
+@not_banned
 async def sathist(ctx):
     """
     Displays a histogram of user scores for the Saturday crossword
@@ -423,7 +432,7 @@ async def sathist(ctx):
 
 
 @bot.command()
-@commands.has_role(CROSSWORD_ROLE)
+@not_banned
 async def deltime(ctx):
     """
     Delete a specific time from your scoresheet. Use if you made a mistake entering something in (it's based on an
