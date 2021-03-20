@@ -18,7 +18,6 @@ from discord.ext import commands
 from matplotlib import pyplot as plt
 from typing import Optional, Tuple
 
-
 CMD_PREFIX = "%"
 CROSSWORD_TIMEZONE = "America/New_York"
 DB_PATH = "./Scoreboard.db"
@@ -28,7 +27,8 @@ BAN_ROLE = "crossedwords"
 def not_banned(func):
     @wraps(func)
     async def wrapper(ctx, *args, **kwargs):
-        return discord.utils.get(ctx.author.roles, name=BAN_ROLE) and await func(ctx, *args, **kwargs)
+        print(str(discord.utils.get(ctx.author.roles, name=BAN_ROLE)))
+        return None if discord.utils.get(ctx.author.roles, name=BAN_ROLE) else await func(ctx, *args, **kwargs)
     return wrapper
 
 
