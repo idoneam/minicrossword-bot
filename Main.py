@@ -27,7 +27,6 @@ BAN_ROLE = "crossedwords"
 def not_banned(func):
     @wraps(func)
     async def wrapper(ctx, *args, **kwargs):
-        print(str(discord.utils.get(ctx.author.roles, name=BAN_ROLE)))
         return None if discord.utils.get(ctx.author.roles, name=BAN_ROLE) else await func(ctx, *args, **kwargs)
     return wrapper
 
