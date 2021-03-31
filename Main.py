@@ -25,11 +25,8 @@ DB_PATH = "./Scoreboard.db"
 DEVELOPER_ROLE = "idoneam"
 BAN_ROLE = "crossedwords"
 
-def not_banned(func):
-    @wraps(func)
-    async def wrapper(ctx, *args, **kwargs):
-        return None if discord.utils.get(ctx.author.roles, name=BAN_ROLE) else await func(ctx, *args, **kwargs)
-    return wrapper
+async def not_banned(ctx):
+    return discord.utils.get(ctx.author.roles, name=BAN_ROLE) is None
 
 
 # Logging configuration
@@ -179,7 +176,7 @@ def _update_avg(conn: sqlite3.Connection, member) -> Tuple[Tuple[Optional[int], 
 
 
 @bot.command()
-@not_banned
+@commands.check(not_banned)
 async def addtime(ctx, time: str = None):
     """
     Add a time to the scoreboard (use seconds in int or xx:xx format)
@@ -245,7 +242,7 @@ async def addtime(ctx, time: str = None):
 
 
 @bot.command()
-@not_banned
+@commands.check(not_banned)
 async def ltimes(ctx):
     """
     List your 20 most recent scores
@@ -269,7 +266,7 @@ async def ltimes(ctx):
 
 
 @bot.command()
-@not_banned
+@commands.check(not_banned)
 async def useravg(ctx):
     """
     List your Saturday crossword avg and your regular avg
@@ -342,7 +339,7 @@ async def _rank(ctx, saturday: bool = False):
 
 
 @bot.command()
-@not_banned
+@commands.check(not_banned)
 async def rank(ctx):
     """
     Display the top 10 in the scoreboard
@@ -351,7 +348,7 @@ async def rank(ctx):
 
 
 @bot.command()
-@not_banned
+@commands.check(not_banned)
 async def saturdayrank(ctx):
     """
     Display the top 10 in the Saturday minicrossword scoreboard
@@ -412,7 +409,7 @@ async def _hist(ctx, saturday: bool = False):
 
 
 @bot.command()
-@not_banned
+@commands.check(not_banned)
 async def hist(ctx):
     """
     Displays a histogram of user scores for the normal crossword
@@ -421,7 +418,7 @@ async def hist(ctx):
 
 
 @bot.command()
-@not_banned
+@commands.check(not_banned)
 async def sathist(ctx):
     """
     Displays a histogram of user scores for the Saturday crossword
@@ -430,7 +427,7 @@ async def sathist(ctx):
 
 
 @bot.command()
-@not_banned
+@commands.check(not_banned)
 async def deltime(ctx):
     """
     Delete a specific time from your scoresheet. Use if you made a mistake entering something in (it's based on an
