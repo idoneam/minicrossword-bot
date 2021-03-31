@@ -52,10 +52,8 @@ class MiniCrosswordBot(commands.Bot):
 
         logger.error("Encountered traceback:\n" + tb)
 
-intents = discord.Intents.default()
-intents.members = True
-intents.presences = True
-bot = MiniCrosswordBot(command_prefix=CMD_PREFIX, intents=intents)
+
+bot = MiniCrosswordBot(command_prefix=CMD_PREFIX)
 
 
 def _format_time(time) -> str:
