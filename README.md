@@ -13,7 +13,7 @@ crosswords and the regular ones.
 ### Pre-requisites
 
 * git
-* Python 3.4 or higher
+* Python 3.7 or higher
 * [`virtualenv`](https://pypi.org/project/virtualenv/)
 * A valid Discord bot token ([instructions](https://github.com/reactiflux/discord-irc/wiki/Creating-a-discord-bot-&-getting-a-token))
 
