@@ -1,5 +1,11 @@
 *.sh
 *.db
 *.log
+.env
+
+# virtualenv folder name
 env/
-.idea/
+
+# ide-specific
+.vscode
+.idea
