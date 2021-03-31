@@ -15,6 +15,7 @@ import traceback
 
 from functools import wraps
 from discord.ext import commands
+from dotenv import load_dotenv
 from matplotlib import pyplot as plt
 from typing import Optional, Tuple
 
@@ -491,6 +492,9 @@ async def link(ctx):
 
 
 def main():
+    # Load environment variables from .env file
+    load_dotenv()
+
     # Create the database with the required tables if needed
     with open("./schema.sql", "r") as sf:
         conn = sqlite3.connect(DB_PATH)
