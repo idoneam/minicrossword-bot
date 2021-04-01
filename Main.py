@@ -211,9 +211,9 @@ async def addtime(ctx, time: str = None):
 
         # Decide to REPLACE or INSERT based on if a score already exists at datestamp
         has_record = c.execute(
-            "SELECT EXISTS (SELECT 1 FROM Scores WHERE ID = ? AND Date= ?)",
+            "SELECT 1 FROM Scores WHERE ID = ? AND Date= ?",
             (member.id, _as_ymd(datestamp))
-        ).fetchone()[0] # the tuple returned is either (1,) or (0,)
+        ).fetchone() # the tuple returned is either (1,) or None
         command = ("REPLACE", "overwritten") if has_record else ("INSERT", "added")
 
         c.execute(f"{command[0]} INTO Scores VALUES (?, ?, ?, ?)",
