@@ -240,7 +240,7 @@ async def addtime(ctx, time: str = None):
 
 @bot.command()
 @commands.has_role(CROSSWORD_ROLE)
-async def ltimes(ctx):
+async def ltimes(ctx, user: discord.Member = None):
     """
     List your 20 most recent scores
     """
@@ -249,14 +249,15 @@ async def ltimes(ctx):
 
     try:
         c = conn.cursor()
+        member = user or ctx.author
         times_list = c.execute("SELECT Score,Date FROM Scores WHERE ID=? ORDER BY Date DESC",
-                               (ctx.author.id,)).fetchall()
+                               (member.id, )).fetchall()
         if not times_list:
             await ctx.send(NO_TIMES_MESSAGE)
             return
 
         scores_str = "\n".join(f"({score_date}) {_format_time(score)}" for score, score_date in times_list[:20])
-        await ctx.send(f"```{ctx.author.name}'s Scoreboard: \n{scores_str}\n```")
+        await ctx.send(f"```{member.name}'s Scoreboard: \n{scores_str}\n```")
 
     finally:
         conn.close()
