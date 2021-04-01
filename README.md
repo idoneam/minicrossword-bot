@@ -27,7 +27,7 @@ cd minicrossword-bot
 # Set up a virtualenv named `env` (replace python3 with python on Windows)
 python3 -m virtualenv env
 
-# Activate the virtual environment
+# Activate the virtual environment (just run env/bin/activate, without the source prefix on Windows)
 source env/bin/activate
 
 # Install dependencies
@@ -48,7 +48,7 @@ DISCORD_TOKEN=####################
 
 Start up the main Python file:
 ```bash
-# Activate virtual environment
+# Activate the virtual environment (just run env/bin/activate, without the source prefix on Windows)
 source env/bin/activate
 
 # Run bot
