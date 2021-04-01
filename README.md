@@ -21,8 +21,7 @@ crosswords and the regular ones.
 
 ```bash
 # Clone the repository
-git clone https://github.com/idoneam/minicrossword-bot.git
-cd minicrossword-bot
+git clone https://github.com/idoneam/minicrossword-bot.git && cd minicrossword-bot
 
 # Set up a virtualenv named `env`
 python -m virtualenv env
