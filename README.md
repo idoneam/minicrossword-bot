@@ -24,8 +24,8 @@ crosswords and the regular ones.
 git clone https://github.com/idoneam/minicrossword-bot.git
 cd minicrossword-bot
 
-# Set up a virtualenv named `env` (replace python3 with python on Windows)
-python3 -m virtualenv env
+# Set up a virtualenv named `env`
+python -m virtualenv env
 
 # Activate the virtual environment (just run env/bin/activate, without the source prefix on Windows)
 source env/bin/activate
