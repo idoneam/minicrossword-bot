@@ -262,9 +262,9 @@ async def ltimes(ctx):
         conn.close()
 
 
-@bot.command()
+@bot.command(aliases=["avg", "average"])
 @commands.has_role(CROSSWORD_ROLE)
-async def useravg(ctx):
+async def useravg(ctx, user: discord.Member = None):
     """
     List your Saturday crossword avg and your regular avg
     """
@@ -274,7 +274,9 @@ async def useravg(ctx):
     try:
         c = conn.cursor()
 
-        avgslist = c.execute('SELECT RegAvg, SatAvg FROM Ranking WHERE ID=?', (ctx.author.id,)).fetchall()
+        member = user or ctx.author
+
+        avgslist = c.execute('SELECT RegAvg, SatAvg FROM Ranking WHERE ID=?', (member.id, )).fetchall()
         if not avgslist:
             await ctx.send("```This user doesn't have any times yet.```")
             return
@@ -283,7 +285,7 @@ async def useravg(ctx):
 
         def _format_avg(sat: bool):
             avg = sat_avg if sat else reg_avg
-            return f"~ {ctx.author.name}'s {'Saturday' if sat else 'Regular'} Crossword Avg: " \
+            return f"~ {member.name}'s {'Saturday' if sat else 'Regular'} Crossword Avg: " \
                    f"{_format_time(avg)}\n" if avg else ""
 
         await ctx.send(f"```apache\n{_format_avg(False)}{_format_avg(True)}```")
