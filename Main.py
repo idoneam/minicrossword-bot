@@ -209,10 +209,17 @@ async def addtime(ctx, time: str = None):
 
         day = _get_day(datestamp)
 
-        c.execute("INSERT OR REPLACE INTO Scores VALUES (?, ?, ?, ?)",
+        # Decide to REPLACE or INSERT based on if a score already exists at datestamp
+        has_record = c.execute(
+            "SELECT 1 FROM Scores WHERE ID = ? AND Date= ?",
+            (member.id, _as_ymd(datestamp))
+        ).fetchone() # the tuple returned is either (1,) or None
+        command = ("REPLACE", "overwritten") if has_record else ("INSERT", "added")
+
+        c.execute(f"{command[0]} INTO Scores VALUES (?, ?, ?, ?)",
                   (member.id, member.name, _as_ymd(datestamp), time))
         conn.commit()
-        await ctx.send("```css\nScore added.\n```")
+        await ctx.send(f"```css\nScore for {_as_ymd(datestamp)} {command[1]}.\n```")
 
         # Update averages and attach them to the message
 
