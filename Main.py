@@ -335,7 +335,7 @@ async def _rank(ctx, saturday: bool = False):
         conn.close()
 
 
-@bot.command()
+@bot.command(aliases=["ranking", "ranks", "rankings", "leaderboard"])
 @commands.has_role(CROSSWORD_ROLE)
 async def rank(ctx):
     """
@@ -405,7 +405,7 @@ async def _hist(ctx, saturday: bool = False):
         conn.close()
 
 
-@bot.command()
+@bot.command(aliases=["histogram"])
 @commands.has_role(CROSSWORD_ROLE)
 async def hist(ctx):
     """
