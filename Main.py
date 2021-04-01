@@ -356,14 +356,15 @@ async def saturdayrank(ctx):
     await _rank(ctx, saturday=True)
 
 
-async def _hist(ctx, saturday: bool = False):
+async def _hist(ctx, user, saturday: bool = False):
     conn = sqlite3.connect(DB_PATH)
 
     try:
         c = conn.cursor()
+        member = user or ctx.author
 
         all_scores = _get_times(c)[int(saturday)]
-        scores = _get_times(c, ctx.author)[int(saturday)]
+        scores = _get_times(c, member)[int(saturday)]
 
         if not (all_scores and scores):
             await ctx.send(NO_TIMES_MESSAGE)
@@ -378,13 +379,13 @@ async def _hist(ctx, saturday: bool = False):
         bins = tuple(range(min_bin, max_bin + 5, 5))
 
         fig, ax = plt.subplots(nrows=1, ncols=1)
-        ax.set_title(f"{ctx.author.name}'s {'saturday ' if saturday else ''}score histogram",
+        ax.set_title(f"{member.name}'s {'saturday ' if saturday else ''}score histogram",
                      color="#DCDDDE")
         ax.set_facecolor("#40444B")
         ax.hist(all_scores, bins, density=True, color="#942626")
         ax.hist(scores, bins, density=True, color="#F04747")
         fig.legend(
-            ("everyone", ctx.author.name),
+            ("everyone", member.name),
             bbox_to_anchor=(0.92, 0.034),
             loc="lower right",
             ncol=2,
@@ -410,20 +411,20 @@ async def _hist(ctx, saturday: bool = False):
 
 @bot.command(aliases=["histogram"])
 @commands.has_role(CROSSWORD_ROLE)
-async def hist(ctx):
+async def hist(ctx, user: discord.Member = None):
     """
     Displays a histogram of user scores for the normal crossword
     """
-    await _hist(ctx, saturday=False)
+    await _hist(ctx, user, saturday=False)
 
 
 @bot.command()
 @commands.has_role(CROSSWORD_ROLE)
-async def sathist(ctx):
+async def sathist(ctx, user: discord.Member = None):
     """
     Displays a histogram of user scores for the Saturday crossword
     """
-    await _hist(ctx, saturday=True)
+    await _hist(ctx, user, saturday=True)
 
 
 @bot.command()
