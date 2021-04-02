@@ -21,14 +21,16 @@ crosswords and the regular ones.
 
 ```bash
 # Clone the repository
-git clone https://github.com/idoneam/minicrossword-bot.git
-cd minicrossword-bot
+git clone https://github.com/idoneam/minicrossword-bot.git && cd minicrossword-bot
 
 # Set up a virtualenv named `env`
-virtualenv env   
+python -m virtualenv env
+
+# Activate the virtual environment (just run env/bin/activate, without the source prefix on Windows)
+source env/bin/activate
 
 # Install dependencies
-pip3 install -r requirements.txt
+pip install -r requirements.txt
 
 # Create .env file from .env.example
 cp .env.example .env
@@ -45,6 +47,10 @@ DISCORD_TOKEN=####################
 
 Start up the main Python file:
 ```bash
+# Activate the virtual environment (just run env/bin/activate, without the source prefix on Windows)
+source env/bin/activate
+
+# Run bot
 python Main.py
 ```
 
