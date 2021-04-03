@@ -49,7 +49,6 @@ class MiniCrosswordBot(commands.Bot):
 
 bot = MiniCrosswordBot(command_prefix=CMD_PREFIX)
 
-
 def _format_time(time) -> str:
     """
     Formats total seconds into a time with minutes and padded seconds if more than 59 seconds.
