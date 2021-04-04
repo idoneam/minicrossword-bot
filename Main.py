@@ -27,27 +27,29 @@ DEVELOPER_ROLE = "idoneam"
 
 
 # Logging configuration
-logger = logging.getLogger('discord')
+logger = logging.getLogger("discord")
 logger.setLevel(logging.INFO)
-handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='a')
-handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+handler = logging.FileHandler(filename="discord.log", encoding="utf-8", mode="a")
+handler.setFormatter(logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s"))
 logger.addHandler(handler)
 
 
-NO_TIMES_MESSAGE = '```No times found.```'
+NO_TIMES_MESSAGE = "```No times found.```"
 
 
 class MiniCrosswordBot(commands.Bot):
     async def on_command_error(self, context, exception):
         tb = ""
-        for line in traceback.TracebackException(type(exception), exception, exception.__traceback__)\
-                .format(chain=True):
+        for line in traceback.TracebackException(type(exception), exception, exception.__traceback__).format(
+            chain=True
+        ):
             tb += "  " + line  # Indent for logging
 
         logger.error("Encountered traceback:\n" + tb)
 
 
 bot = MiniCrosswordBot(command_prefix=CMD_PREFIX)
+
 
 def _format_time(time) -> str:
     """
@@ -78,7 +80,7 @@ def _get_day_from_ymd(time_str) -> str:
 
 @bot.event
 async def on_ready():
-    logger.info(f'Logged in as {bot.user.name} ({bot.user.id})')
+    logger.info(f"Logged in as {bot.user.name} ({bot.user.id})")
 
 
 @bot.command()
@@ -98,8 +100,8 @@ async def backup(ctx):
     """
     Send the current database file to the channel
     """
-    current_time = datetime.datetime.now(tz=pytz.timezone(CROSSWORD_TIMEZONE)).strftime('%Y%m%d-%H:%M')
-    backup_filename = f'MiniScores_{current_time}.db'
+    current_time = datetime.datetime.now(tz=pytz.timezone(CROSSWORD_TIMEZONE)).strftime("%Y%m%d-%H:%M")
+    backup_filename = f"MiniScores_{current_time}.db"
     await ctx.send("Backup", file=discord.File(DB_PATH, filename=backup_filename))
 
 
@@ -126,13 +128,14 @@ def _get_times(c: sqlite3.Cursor, member=None) -> Tuple[Tuple[int, ...], Tuple[i
     return tuple(reg_vals), tuple(sat_vals)
 
 
-def _update_avg(conn: sqlite3.Connection, member) -> Tuple[Tuple[Optional[int], Optional[int]],
-                                                           Tuple[Optional[int], Optional[int]]]:
+def _update_avg(
+    conn: sqlite3.Connection, member
+) -> Tuple[Tuple[Optional[int], Optional[int]], Tuple[Optional[int], Optional[int]]]:
     c = conn.cursor()
 
     reg_vals, sat_vals = _get_times(c, member)
 
-    user_avgs = c.execute('SELECT RegAvg, SatAvg FROM Ranking WHERE ID = ?', (member.id,)).fetchone()
+    user_avgs = c.execute("SELECT RegAvg, SatAvg FROM Ranking WHERE ID = ?", (member.id,)).fetchone()
     if not user_avgs:
         user_avgs = (None, None)
 
@@ -149,7 +152,7 @@ def _update_avg(conn: sqlite3.Connection, member) -> Tuple[Tuple[Optional[int], 
         c.execute(
             "INSERT OR REPLACE INTO Ranking VALUES (:id, :name, :reg_avg, "
             "(SELECT SatAvg FROM Ranking WHERE ID=:id))",
-            {"id": member.id, "name": member.name, "reg_avg": new_reg_avg}
+            {"id": member.id, "name": member.name, "reg_avg": new_reg_avg},
         )
         conn.commit()
 
@@ -157,9 +160,8 @@ def _update_avg(conn: sqlite3.Connection, member) -> Tuple[Tuple[Optional[int], 
     if sat_vals:
         new_sat_avg = int(statistics.mean(sat_vals))
         c.execute(
-            "INSERT OR REPLACE INTO Ranking VALUES(:id, :name, (SELECT RegAvg FROM Ranking WHERE ID=:id), "
-            ":sat_avg)",
-            {"id": member.id, "name": member.name, "sat_avg": new_sat_avg}
+            "INSERT OR REPLACE INTO Ranking VALUES(:id, :name, (SELECT RegAvg FROM Ranking WHERE ID=:id), " ":sat_avg)",
+            {"id": member.id, "name": member.name, "sat_avg": new_sat_avg},
         )
         conn.commit()
 
@@ -185,14 +187,14 @@ async def addtime(ctx, time: str = None):
     # idiot proofing, convert time to int
     try:
         if ":" in time:
-            timestamp = datetime.datetime.strptime(time, '%M:%S')
+            timestamp = datetime.datetime.strptime(time, "%M:%S")
             time = timestamp.minute * 60 + timestamp.second
         else:
             time = int(time)
             if not (1 <= time <= 1000):
                 raise ValueError
     except ValueError:  # Invalid strptime, int cast, or out of "valid" range
-        await ctx.send('`lmao nice try ( ͠° ͟ʖ ͠°)`')
+        await ctx.send("`lmao nice try ( ͠° ͟ʖ ͠°)`")
         return
 
     conn = sqlite3.connect(DB_PATH)
@@ -210,13 +212,11 @@ async def addtime(ctx, time: str = None):
 
         # Decide to REPLACE or INSERT based on if a score already exists at datestamp
         has_record = c.execute(
-            "SELECT 1 FROM Scores WHERE ID = ? AND Date= ?",
-            (member.id, _as_ymd(datestamp))
-        ).fetchone() # the tuple returned is either (1,) or None
+            "SELECT 1 FROM Scores WHERE ID = ? AND Date= ?", (member.id, _as_ymd(datestamp))
+        ).fetchone()  # the tuple returned is either (1,) or None
         command = ("REPLACE", "overwritten") if has_record else ("INSERT", "added")
 
-        c.execute(f"{command[0]} INTO Scores VALUES (?, ?, ?, ?)",
-                  (member.id, member.name, _as_ymd(datestamp), time))
+        c.execute(f"{command[0]} INTO Scores VALUES (?, ?, ?, ?)", (member.id, member.name, _as_ymd(datestamp), time))
         conn.commit()
         await ctx.send(f"```css\nScore for {_as_ymd(datestamp)} {command[1]}.\n```")
 
@@ -233,8 +233,10 @@ async def addtime(ctx, time: str = None):
 
             avg_diff = f"{new_avg - old_avg:+d}" if old_avg is not None and right_day_for_average else None
 
-            return f"~ {member.name}'s {'Saturday' if saturday else 'Regular'} Crossword Avg: " \
-                   f"{_format_time(new_avg)}{_format_avg_delta(avg_diff)} ~"
+            return (
+                f"~ {member.name}'s {'Saturday' if saturday else 'Regular'} Crossword Avg: "
+                f"{_format_time(new_avg)}{_format_avg_delta(avg_diff)} ~"
+            )
 
         (old_reg_avg, new_reg_avg), (old_sat_avg, new_sat_avg) = _update_avg(conn, member)
         msg = f"```{_avg_text(old_reg_avg, new_reg_avg)}\n{_avg_text(old_sat_avg, new_sat_avg, saturday=True)}```"
@@ -256,8 +258,7 @@ async def ltimes(ctx, user: discord.Member = None):
     try:
         c = conn.cursor()
         member = user or ctx.author
-        times_list = c.execute("SELECT Score,Date FROM Scores WHERE ID=? ORDER BY Date DESC",
-                               (member.id, )).fetchall()
+        times_list = c.execute("SELECT Score,Date FROM Scores WHERE ID=? ORDER BY Date DESC", (member.id,)).fetchall()
         if not times_list:
             await ctx.send(NO_TIMES_MESSAGE)
             return
@@ -283,7 +284,7 @@ async def useravg(ctx, user: discord.Member = None):
 
         member = user or ctx.author
 
-        avgslist = c.execute('SELECT RegAvg, SatAvg FROM Ranking WHERE ID=?', (member.id, )).fetchall()
+        avgslist = c.execute("SELECT RegAvg, SatAvg FROM Ranking WHERE ID=?", (member.id,)).fetchall()
         if not avgslist:
             await ctx.send("```This user doesn't have any times yet.```")
             return
@@ -292,8 +293,11 @@ async def useravg(ctx, user: discord.Member = None):
 
         def _format_avg(sat: bool):
             avg = sat_avg if sat else reg_avg
-            return f"~ {member.name}'s {'Saturday' if sat else 'Regular'} Crossword Avg: " \
-                   f"{_format_time(avg)}\n" if avg else ""
+            return (
+                f"~ {member.name}'s {'Saturday' if sat else 'Regular'} Crossword Avg: " f"{_format_time(avg)}\n"
+                if avg
+                else ""
+            )
 
         await ctx.send(f"```apache\n{_format_avg(False)}{_format_avg(True)}```")
 
@@ -321,16 +325,20 @@ async def _rank(ctx, saturday: bool = False):
             if len(scoreboard) == 10:
                 break
 
-            usr_times_list = c.execute('SELECT Score, Date FROM Scores WHERE Name=? ORDER BY Date',
-                                       (member_name,)).fetchall()
-            type_days = ["", *(
-                score_date
-                for _, score_date in usr_times_list
-                if (saturday and _get_day_from_ymd(score_date) == "Sat") or
-                   (not saturday and _get_day_from_ymd(score_date) != "Sat")
-            )]
+            usr_times_list = c.execute(
+                "SELECT Score, Date FROM Scores WHERE Name=? ORDER BY Date", (member_name,)
+            ).fetchall()
+            type_days = [
+                "",
+                *(
+                    score_date
+                    for _, score_date in usr_times_list
+                    if (saturday and _get_day_from_ymd(score_date) == "Sat")
+                    or (not saturday and _get_day_from_ymd(score_date) != "Sat")
+                ),
+            ]
 
-            delta = datetime.datetime.now() - datetime.datetime.strptime(type_days[-1], '%Y-%m-%d')
+            delta = datetime.datetime.now() - datetime.datetime.strptime(type_days[-1], "%Y-%m-%d")
             if delta.days > (30 if saturday else 10):
                 continue
 
@@ -385,8 +393,7 @@ async def _hist(ctx, user, saturday: bool = False):
         bins = tuple(range(min_bin, max_bin + 5, 5))
 
         fig, ax = plt.subplots(nrows=1, ncols=1)
-        ax.set_title(f"{member.name}'s {'saturday ' if saturday else ''}score histogram",
-                     color="#DCDDDE")
+        ax.set_title(f"{member.name}'s {'saturday ' if saturday else ''}score histogram", color="#DCDDDE")
         ax.set_facecolor("#40444B")
         ax.hist(all_scores, bins, density=True, color="#942626")
         ax.hist(scores, bins, density=True, color="#F04747")
@@ -397,7 +404,8 @@ async def _hist(ctx, user, saturday: bool = False):
             ncol=2,
             labelcolor="#DCDDDE",
             fancybox=False,
-            framealpha=0)
+            framealpha=0,
+        )
         fig.subplots_adjust(bottom=0.15)
         ax.axvline(statistics.mean(all_scores), color="#BB3030", linestyle="dashed", linewidth=2)
         ax.axvline(statistics.mean(scores), color="#F47676", linestyle="dashed", linewidth=2)
@@ -445,18 +453,18 @@ async def deltime(ctx):
 
     try:
         c = conn.cursor()
-        times_list = c.execute('SELECT Score, Date FROM Scores WHERE ID = ?', (ctx.author.id,)).fetchall()
+        times_list = c.execute("SELECT Score, Date FROM Scores WHERE ID = ?", (ctx.author.id,)).fetchall()
         if not times_list:
-            await ctx.send('```No scores found.```')
+            await ctx.send("```No scores found.```")
             return
 
         # print the times of the user in pages
         msg = "```Please choose a score you would like to delete.\n\n"
         for i, (score, score_date) in enumerate(times_list, 1):
-            msg += f'[{i}]  ({score_date}) {_format_time(score)} \n'
-        msg += '```'
+            msg += f"[{i}]  ({score_date}) {_format_time(score)} \n"
+        msg += "```"
         await ctx.send(msg, delete_after=30)
-        msg = '```\n[0] Exit without deleting scores```'
+        msg = "```\n[0] Exit without deleting scores```"
         await ctx.send(msg, delete_after=30)
 
         def event_check(m):
@@ -475,8 +483,10 @@ async def deltime(ctx):
             return
 
         # Delete selected the score from the database
-        c.execute('DELETE FROM Scores WHERE Score=? AND Date=? AND ID=?',
-                  (times_list[choice - 1][0], times_list[choice - 1][1], ctx.author.id))
+        c.execute(
+            "DELETE FROM Scores WHERE Score=? AND Date=? AND ID=?",
+            (times_list[choice - 1][0], times_list[choice - 1][1], ctx.author.id),
+        )
         conn.commit()
 
         # Update average scores in the database

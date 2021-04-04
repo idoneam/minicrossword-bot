@@ -32,6 +32,9 @@ source env/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
+# Set up pre-commit hook
+pre-commit install
+
 # Create .env file from .env.example
 cp .env.example .env
 ```
