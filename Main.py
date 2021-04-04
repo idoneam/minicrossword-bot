@@ -52,7 +52,6 @@ class MiniCrosswordBot(commands.Bot):
 
 bot = MiniCrosswordBot(command_prefix=CMD_PREFIX)
 
-
 def _format_time(time) -> str:
     """
     Formats total seconds into a time with minutes and padded seconds if more than 59 seconds.
@@ -212,10 +211,17 @@ async def addtime(ctx, time: str = None):
 
         day = _get_day(datestamp)
 
-        c.execute("INSERT OR REPLACE INTO Scores VALUES (?, ?, ?, ?)",
+        # Decide to REPLACE or INSERT based on if a score already exists at datestamp
+        has_record = c.execute(
+            "SELECT 1 FROM Scores WHERE ID = ? AND Date= ?",
+            (member.id, _as_ymd(datestamp))
+        ).fetchone() # the tuple returned is either (1,) or None
+        command = ("REPLACE", "overwritten") if has_record else ("INSERT", "added")
+
+        c.execute(f"{command[0]} INTO Scores VALUES (?, ?, ?, ?)",
                   (member.id, member.name, _as_ymd(datestamp), time))
         conn.commit()
-        await ctx.send("```css\nScore added.\n```")
+        await ctx.send(f"```css\nScore for {_as_ymd(datestamp)} {command[1]}.\n```")
 
         # Update averages and attach them to the message
 
@@ -243,7 +249,7 @@ async def addtime(ctx, time: str = None):
 
 @bot.command()
 @commands.check(not_banned)
-async def ltimes(ctx):
+async def ltimes(ctx, user: discord.Member = None):
     """
     List your 20 most recent scores
     """
@@ -252,22 +258,23 @@ async def ltimes(ctx):
 
     try:
         c = conn.cursor()
+        member = user or ctx.author
         times_list = c.execute("SELECT Score,Date FROM Scores WHERE ID=? ORDER BY Date DESC",
-                               (ctx.author.id,)).fetchall()
+                               (member.id, )).fetchall()
         if not times_list:
             await ctx.send(NO_TIMES_MESSAGE)
             return
 
         scores_str = "\n".join(f"({score_date}) {_format_time(score)}" for score, score_date in times_list[:20])
-        await ctx.send(f"```{ctx.author.name}'s Scoreboard: \n{scores_str}\n```")
+        await ctx.send(f"```{member.name}'s Scoreboard: \n{scores_str}\n```")
 
     finally:
         conn.close()
 
 
-@bot.command()
+@bot.command(aliases=["avg", "average"])
 @commands.check(not_banned)
-async def useravg(ctx):
+async def useravg(ctx, user: discord.Member = None):
     """
     List your Saturday crossword avg and your regular avg
     """
@@ -277,7 +284,9 @@ async def useravg(ctx):
     try:
         c = conn.cursor()
 
-        avgslist = c.execute('SELECT RegAvg, SatAvg FROM Ranking WHERE ID=?', (ctx.author.id,)).fetchall()
+        member = user or ctx.author
+
+        avgslist = c.execute('SELECT RegAvg, SatAvg FROM Ranking WHERE ID=?', (member.id, )).fetchall()
         if not avgslist:
             await ctx.send("```This user doesn't have any times yet.```")
             return
@@ -286,7 +295,7 @@ async def useravg(ctx):
 
         def _format_avg(sat: bool):
             avg = sat_avg if sat else reg_avg
-            return f"~ {ctx.author.name}'s {'Saturday' if sat else 'Regular'} Crossword Avg: " \
+            return f"~ {member.name}'s {'Saturday' if sat else 'Regular'} Crossword Avg: " \
                    f"{_format_time(avg)}\n" if avg else ""
 
         await ctx.send(f"```apache\n{_format_avg(False)}{_format_avg(True)}```")
@@ -338,7 +347,7 @@ async def _rank(ctx, saturday: bool = False):
         conn.close()
 
 
-@bot.command()
+@bot.command(aliases=["ranking", "ranks", "rankings", "leaderboard"])
 @commands.check(not_banned)
 async def rank(ctx):
     """
@@ -356,14 +365,15 @@ async def saturdayrank(ctx):
     await _rank(ctx, saturday=True)
 
 
-async def _hist(ctx, saturday: bool = False):
+async def _hist(ctx, user, saturday: bool = False):
     conn = sqlite3.connect(DB_PATH)
 
     try:
         c = conn.cursor()
+        member = user or ctx.author
 
         all_scores = _get_times(c)[int(saturday)]
-        scores = _get_times(c, ctx.author)[int(saturday)]
+        scores = _get_times(c, member)[int(saturday)]
 
         if not (all_scores and scores):
             await ctx.send(NO_TIMES_MESSAGE)
@@ -378,13 +388,13 @@ async def _hist(ctx, saturday: bool = False):
         bins = tuple(range(min_bin, max_bin + 5, 5))
 
         fig, ax = plt.subplots(nrows=1, ncols=1)
-        ax.set_title(f"{ctx.author.name}'s {'saturday ' if saturday else ''}score histogram",
+        ax.set_title(f"{member.name}'s {'saturday ' if saturday else ''}score histogram",
                      color="#DCDDDE")
         ax.set_facecolor("#40444B")
         ax.hist(all_scores, bins, density=True, color="#942626")
         ax.hist(scores, bins, density=True, color="#F04747")
         fig.legend(
-            ("everyone", ctx.author.name),
+            ("everyone", member.name),
             bbox_to_anchor=(0.92, 0.034),
             loc="lower right",
             ncol=2,
@@ -408,22 +418,23 @@ async def _hist(ctx, saturday: bool = False):
         conn.close()
 
 
-@bot.command()
+
+@bot.command(aliases=["histogram"])
 @commands.check(not_banned)
-async def hist(ctx):
+async def hist(ctx, user: discord.Member = None):
     """
     Displays a histogram of user scores for the normal crossword
     """
-    await _hist(ctx, saturday=False)
+    await _hist(ctx, user, saturday=False)
 
 
 @bot.command()
 @commands.check(not_banned)
-async def sathist(ctx):
+async def sathist(ctx, user: discord.Member = None):
     """
     Displays a histogram of user scores for the Saturday crossword
     """
-    await _hist(ctx, saturday=True)
+    await _hist(ctx, user, saturday=True)
 
 
 @bot.command()
