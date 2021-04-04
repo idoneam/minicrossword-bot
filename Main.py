@@ -19,11 +19,11 @@ from dotenv import load_dotenv
 from matplotlib import pyplot as plt
 from typing import Optional, Tuple
 
+BAN_ROLE = "crossedwords"
 CMD_PREFIX = "%"
 CROSSWORD_TIMEZONE = "America/New_York"
 DB_PATH = "./Scoreboard.db"
 DEVELOPER_ROLE = "idoneam"
-BAN_ROLE = "crossedwords"
 
 async def not_banned(ctx):
     return discord.utils.get(ctx.author.roles, name=BAN_ROLE) is None
