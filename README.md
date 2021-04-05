@@ -84,12 +84,14 @@ one of the following commands:
 # Provide the bot's token using a flag:
 docker run \
   -v $(pwd)/Scoreboard.db:/bot/Scoreboard.db \
-  -e DISCORD_TOKEN=...
+  -e DISCORD_TOKEN=... \
+  minicrossword:latest
 
 # Provide the bot's token using a .env file provided at runtime:
 #   Note that this uses Docker's built-in --env-file flag, but the .env file can also
 #   be bound to the container, in which case python-dotenv will load it instead.
 docker run \
   -v $(pwd)/Scoreboard.db:/bot/Scoreboard.db \
-  --env-file $(pwd)/.env 
+  --env-file $(pwd)/.env \
+  minicrossword:latest
 ```
