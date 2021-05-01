@@ -22,8 +22,8 @@ jobs:
         with:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          registry: docker.pkg.github.com
-          repository: idoneam/minicrossword-bot/minicrossword-bot
+          registry: ghcr.io
+          repository: idoneam/minicrossword-bot
           push: ${{ github.event_name != 'pull_request' }}
           tag_with_ref: true
           tag_with_sha: true
