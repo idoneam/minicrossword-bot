@@ -8,7 +8,9 @@ in an embedded SQLite database.
 Supports users adding their times, displaying most recent times, deleting times,
 displaying user averages, and displaying rankings for the more difficult Saturday
 crosswords and the regular ones.
-## Setup
+
+
+## Setup for Development
 
 ### Pre-requisites
 
@@ -63,3 +65,33 @@ server.
 In addition to the user-facing commands outlined above, there are developer commands
 available to users with the `idoneam` role. See [`Main.py`](./Main.py) docstrings for additional
 details.
+
+
+## Deploying
+
+The bot should be deployed using the provided Dockerfile.
+
+The image can be built with the following command:
+
+```bash
+docker build -t minicrossword:latest .
+```
+
+To run the container in a detached state with a persistent volume for the database, use
+one of the following commands:
+
+```bash
+# Provide the bot's token using a flag:
+docker run \
+  -v $(pwd)/Scoreboard.db:/bot/Scoreboard.db \
+  -e DISCORD_TOKEN=... \
+  minicrossword:latest
+
+# Provide the bot's token using a .env file provided at runtime:
+#   Note that this uses Docker's built-in --env-file flag, but the .env file can also
+#   be bound to the container, in which case python-dotenv will load it instead.
+docker run \
+  -v $(pwd)/Scoreboard.db:/bot/Scoreboard.db \
+  --env-file $(pwd)/.env \
+  minicrossword:latest
+```
