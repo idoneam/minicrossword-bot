@@ -9,8 +9,11 @@
 
 printf "$1" > key.pem
 chmod 400 key.pem
-ssh -o StrictHostKeyChecking=no -i key.pem "$2" "cd '$3' && setlock '.$4' sh -c '
-docker pull $5 &&\
-docker stop $4 &&\
-docker rm $4 &&\
-docker run -d --name=$4 $6 $5'" 2> /dev/null
+ssh -o StrictHostKeyChecking=no -i key.pem "$2" "\
+cd '$3' && \
+setlock '.$4' sh -c '
+docker pull $5 2>&1 && \
+docker stop $4 2>&1 && \
+docker rm $4 2>&1 && \
+docker run -d --name=$4 $6 $5 2>&1' && \
+rm '.$4'" 2> /dev/null
