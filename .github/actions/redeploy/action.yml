@@ -1,0 +1,30 @@
+name: 'redeploy'
+
+inputs:
+  key:
+    required: true
+  host:
+    required: true
+  user:
+    required: true
+  dir:
+    required: true
+    default: '.'
+  name:
+    required: true
+  image:
+    required: true
+  dr_args:
+    required: true
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.key }}
+    - ${{ inputs.host }}
+    - ${{ inputs.user }}
+    - ${{ inputs.dir }}
+    - ${{ inputs.name }}
+    - ${{ inputs.image }}
+    - ${{ inputs.dr_args }}
