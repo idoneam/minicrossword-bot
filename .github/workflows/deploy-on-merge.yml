@@ -20,9 +20,8 @@ jobs:
           repository: 'idoneam/minicrossword-bot'
       - uses: './.github/actions/redeploy'
         with:
-          host: ${{ secrets.VM_IP }}
-          user: ${{ secrets.VM_USER }}
           key: ${{ secrets.VM_KEY }}
+          address: ${{ secrets.VM_ADD }}
           dir: 'minicross'
           name: 'minicrossword-bot'
           image: 'ghcr.io/idoneam/minicrossword:latest'

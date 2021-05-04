@@ -3,13 +3,10 @@ name: 'redeploy'
 inputs:
   key:
     required: true
-  host:
-    required: true
-  user:
+  address:
     required: true
   dir:
     required: true
-    default: '.'
   name:
     required: true
   image:
@@ -22,8 +19,7 @@ runs:
   image: 'Dockerfile'
   args:
     - ${{ inputs.key }}
-    - ${{ inputs.host }}
-    - ${{ inputs.user }}
+    - ${{ inputs.address }}
     - ${{ inputs.dir }}
     - ${{ inputs.name }}
     - ${{ inputs.image }}
