@@ -21,7 +21,9 @@ jobs:
       - uses: './.github/actions/redeploy'
         with:
           key: ${{ secrets.VM_KEY }}
-          address: ${{ secrets.VM_ADD }}
+          ip: ${{ secrets.VM_IP }}
+          pub_host: ${{ secrets.VM_PUB_HOST }}
+          user: ${{ secrets.VM_USER }}
           dir: 'minicross'
           name: 'minicrossword-bot'
           image: 'ghcr.io/idoneam/minicrossword:latest'
