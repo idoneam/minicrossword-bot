@@ -1,0 +1,32 @@
+name: cd
+
+on:
+  push:
+    branches:
+      - 'master'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: docker/setup-buildx-action@v1
+      - uses: docker/login-action@v1
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ghcr.io
+      - uses: docker/build-push-action@v2
+        with:
+          push: true
+          tags: 'ghcr.io/idoneam/minicrossword-bot:latest'
+      - uses: idoneam/redeploy@v1
+        with:
+          key: ${{ secrets.VM_KEY }}
+          ip: ${{ secrets.VM_IP }}
+          host_key: ${{ secrets.VM_PUB_HOST }}
+          user: ${{ secrets.VM_USER }}
+          cwd: 'minicrossword-bot'
+          ident: 'minicrossword-bot'
+          image: 'ghcr.io/idoneam/minicrossword-bot:latest'
+          args: '--env-file=$(pwd)/.env restart=always -v $(pwd)/Scoreboard.db:/bot/Scoreboard.db'
